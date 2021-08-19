@@ -1,0 +1,219 @@
+﻿@model MBG.ViewModels.EmployeeVM
+
+@{
+    ViewBag.Title = "Detail";
+}
+
+<h2>Employee Details</h2>
+
+<div>
+
+    <hr />
+    <table width="100%">
+        <tr>
+            <td align="left">
+                <dl class="dl-horizontal">
+                    <dt>
+                        @Html.DisplayNameFor(model => model.EmpObj.Name)
+                    </dt>
+
+                    <dd>
+                        @Html.DisplayFor(model => model.EmpObj.Name)
+                    </dd>
+
+                    <dt>
+                        @Html.DisplayNameFor(model => model.EmpObj.Email)
+                    </dt>
+
+                    <dd>
+                        @Html.DisplayFor(model => model.EmpObj.Email)
+                    </dd>
+
+                    <dt>
+                        @Html.DisplayNameFor(model => model.EmpObj.Designation)
+                    </dt>
+
+                    <dd>
+                        @Html.DisplayFor(model => model.EmpObj.Designation)
+                    </dd>
+
+                </dl>
+            </td>
+
+            <td>
+                <span class="field-validation-error" style="color:red; font:200;" id="spanfile">@TempData["Error"]</span>
+            </td>
+           
+            <td align="right">
+
+                @using (Html.BeginForm("FileUpload", "Home", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                {
+                    @Html.ValidationSummary(true);
+                    <ol style="list-style-type:none;">
+                        <li class="lifile">
+                            @Html.Hidden("EMPID", Model.EmpObj.EmpId)
+                            <input type="file" id="fileToUpload" name="file" accept=".jpg, .gif, .jpeg, .png, .pdf,.doc,.docx,.xlsx" />
+                          
+                        </li>
+                    </ol>
+                    <input type="submit"
+                           id="btnSubmit"
+                           value="Upload Document"
+                           height="40"
+                           style="border-color:black;
+                                  background-color:white;
+                                  width:300px;
+                                  height:40px;
+                                  font-size:13px;
+                                  color:black;
+                                  border-radius:12px;" />
+
+                }
+                <span class="field-validation-error" style="color:red;" id="spanfile">@TempData["Message"]</span>
+
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3" align="center">
+                <span class="field-validation-error" style="color:green;" id="spanfile">Image and pdf files can be viewed in browser</span>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3">
+                <table class="table">
+                    <tr>
+                        <th>
+                            @Html.DisplayNameFor(model => model.EmpDetails[0].FileName)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.EmpDetails[0].CreatedDate)
+                        </th>
+
+                        <th></th>
+                    </tr>
+
+                    @foreach (var item in Model.EmpDetails)
+                    {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.FileName)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.CreatedDate)
+                            </td>
+                            <td>
+                                @Html.ActionLink("View", "ViewFile", new { DetailsId = item.DetailsId,EmpId = item.EmpId }, new { onclick = "GetClientReport(item.DetailsId);" }) |
+                                @Html.ActionLink("Download", "DownloadFile", new { DetailsId = item.DetailsId,EmpId = item.EmpId }) |
+                                @Html.ActionLink("Delete", "DeleteFile", new { DetailsId = item.DetailsId, EmpId = item.EmpId })
+                            </td>
+                        </tr>
+                    }
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>
+<p>
+    @Html.ActionLink("Back to List", "Index")
+</p>
+
+<script type="text/jscript">
+    //get file size
+    function GetFileSize(fileid) {
+        try {
+            var fileSize = 0;
+            //for IE
+            if ($.browser.msie) {
+                //before making an object of ActiveXObject,
+                //please make sure ActiveX is enabled in your IE browser
+                var objFSO = new ActiveXObject("Scripting.FileSystemObject"); var filePath = $("#" + fileid)[0].value;
+                var objFile = objFSO.getFile(filePath);
+                var fileSize = objFile.size; //size in kb
+                fileSize = fileSize / 1048576; //size in mb
+            }
+            //for FF, Safari, Opeara and Others
+            else {
+                fileSize = $("#" + fileid)[0].files[0].size //size in kb
+                fileSize = fileSize / 1048576; //size in mb
+            }
+            return fileSize;
+        }
+        catch (e) {
+            alert("Error is :" + e);
+        }
+    }
+
+    //get file path from client system
+    function getNameFromPath(strFilepath) {
+        var objRE = new RegExp(/([^\/\\]+)$/);
+        var strName = objRE.exec(strFilepath);
+
+        if (strName == null) {
+            return null;
+        }
+        else {
+            return strName[0];
+        }
+    }
+
+    $("#btnSubmit").bind("click", function () {
+        if ($('#fileToUpload').val() == "") {
+            $("#spanfile").html("Please upload file");
+            return false;
+        }
+        else {
+            return checkfile();
+        }
+    });
+
+    function checkfile() {
+        var file = getNameFromPath($("#fileToUpload").val());
+        if (file != null) {
+            var extension = file.substr((file.lastIndexOf('.') + 1));
+            // alert(extension);
+            switch (extension) {
+                case 'jpg':
+                case 'png':
+                case 'gif':
+                case 'pdf':
+                case 'jpeg':
+                case 'xlsx':
+                case 'doc':
+                case 'docx':
+                    flag = true;
+                    break;
+                default:
+                    flag = false;
+            }
+        }
+        if (flag == false) {
+            $("#spanfile").text("You can upload only jpg,jpeg,png,gif,pdf,doc,docx,xlsx extension file");
+            return false;
+        }
+        else {
+            var size = GetFileSize('fileToUpload');
+            if (size > 3) {
+                $("#spanfile").text("You can upload file up to 3 MB");
+                return false;
+            }
+            else {
+                $("#spanfile").text("");
+            }
+        }
+    }
+
+    $(function () {
+        $("#fileToUpload").change(function () {
+            checkfile();
+        });
+    });
+
+    function GetClientReport(id) {
+         window.open('/Home/ViewFile?DetailsId=' + id, "_blank");  
+      
+}; 
+</script>
+
+
+
